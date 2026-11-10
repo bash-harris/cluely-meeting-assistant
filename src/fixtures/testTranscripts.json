@@ -1,0 +1,174 @@
+[
+  {
+    "id": "t-001",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Hey everyone, can you hear me okay? Just adjusting my headset before we start.",
+    "isQuestion": false,
+    "intent": "chatter"
+  },
+  {
+    "id": "t-002",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "Yeah, loud and clear. Let's wait another 30 seconds for Alex to jump on.",
+    "isQuestion": false,
+    "intent": "chatter"
+  },
+  {
+    "id": "t-003",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Could you walk us through how the dual-channel audio isolation handles laptop speaker bleed?",
+    "isQuestion": true,
+    "intent": "technical_query",
+    "expectedAnswerKeywords": ["WASAPI", "RMS", "bleed", "echo", "Channel 0", "Channel 1"]
+  },
+  {
+    "id": "t-004",
+    "channel": 0,
+    "speaker": "You (Mic)",
+    "text": "Sure, so we use an RMS energy gate coupled with acoustic echo suppression to isolate the streams.",
+    "isQuestion": false,
+    "intent": "user_response"
+  },
+  {
+    "id": "t-005",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "What happens if the user unplugs their USB headset during the call?",
+    "isQuestion": true,
+    "intent": "edge_case_query",
+    "expectedAnswerKeywords": ["failover", "disconnect", "rebind", "loopback"]
+  },
+  {
+    "id": "t-006",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Makes sense. And what is our end-to-end latency SLA for the STT turns?",
+    "isQuestion": true,
+    "intent": "sla_query",
+    "expectedAnswerKeywords": ["300 milliseconds", "350ms", "VAD", "WebSocket"]
+  },
+  {
+    "id": "t-007",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "I'm concerned that Zoom or Google Meet will capture the overlay if the candidate is sharing their full desktop.",
+    "isQuestion": true,
+    "intent": "security_objection",
+    "expectedAnswerKeywords": ["WDA_EXCLUDEFROMCAPTURE", "setContentProtection", "SetWindowDisplayAffinity", "framebuffer"]
+  },
+  {
+    "id": "t-008",
+    "channel": 0,
+    "speaker": "You (Mic)",
+    "text": "No, because we set the OS display affinity flag WDA_EXCLUDEFROMCAPTURE which strips the window at DWM compositor level.",
+    "isQuestion": false,
+    "intent": "user_response"
+  },
+  {
+    "id": "t-009",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "How does the click-through routing work while I'm typing code in VS Code?",
+    "isQuestion": true,
+    "intent": "technical_query",
+    "expectedAnswerKeywords": ["setIgnoreMouseEvents", "forward", "hover", "interactivity"]
+  },
+  {
+    "id": "t-010",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "Alright, perfect. Let's move on to the next item on the sprint board.",
+    "isQuestion": false,
+    "intent": "chatter"
+  },
+  {
+    "id": "t-011",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Can you explain why we downsample audio to 16 kHz 16-bit mono chunks?",
+    "isQuestion": true,
+    "intent": "technical_query",
+    "expectedAnswerKeywords": ["16 kHz", "mono", "bandwidth", "speech recognition", "100ms"]
+  },
+  {
+    "id": "t-012",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "I was looking at the logs earlier and everything looked quite stable.",
+    "isQuestion": false,
+    "intent": "chatter"
+  },
+  {
+    "id": "t-013",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "What is the silence threshold configured for the VAD turn assembly buffer?",
+    "isQuestion": true,
+    "intent": "technical_query",
+    "expectedAnswerKeywords": ["400 milliseconds", "VAD", "silence", "interim"]
+  },
+  {
+    "id": "t-014",
+    "channel": 0,
+    "speaker": "You (Mic)",
+    "text": "It is set to 400 milliseconds so we finalize turns promptly without splitting mid-sentence pauses.",
+    "isQuestion": false,
+    "intent": "user_response"
+  },
+  {
+    "id": "t-015",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "How do you avoid the LLM answering statements that the user themselves said?",
+    "isQuestion": true,
+    "intent": "architecture_query",
+    "expectedAnswerKeywords": ["role-aware", "Channel 0", "Channel 1", "filtering"]
+  },
+  {
+    "id": "t-016",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Good point. And how many minutes of audio turns are kept in the rolling ring buffer?",
+    "isQuestion": true,
+    "intent": "architecture_query",
+    "expectedAnswerKeywords": ["5 minutes", "ring buffer", "memory", "sliding window"]
+  },
+  {
+    "id": "t-017",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "Awesome. The customer was also asking if local documents can be referenced automatically.",
+    "isQuestion": true,
+    "intent": "feature_query",
+    "expectedAnswerKeywords": ["RAG", "multimodal", "top-k", "document chunks"]
+  },
+  {
+    "id": "t-018",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Please summarize the main keyboard shortcuts available in the stealth overlay.",
+    "isQuestion": true,
+    "intent": "imperative_request",
+    "expectedAnswerKeywords": ["Ctrl+Enter", "Ctrl+\\", "hotkey", "shortcuts"]
+  },
+  {
+    "id": "t-019",
+    "channel": 1,
+    "speaker": "Speaker 2",
+    "text": "Thank you everyone for the deep dive. That covers all my questions.",
+    "isQuestion": false,
+    "intent": "chatter"
+  },
+  {
+    "id": "t-020",
+    "channel": 1,
+    "speaker": "Speaker 1",
+    "text": "Great meeting, let's wrap up and push the build to staging.",
+    "isQuestion": false,
+    "intent": "chatter"
+  }
+]
+

@@ -1,0 +1,34 @@
+{
+  "name": "cluely-meeting-assistant",
+  "version": "1.0.0",
+  "description": "Cluely-style stealth meeting assistant with dual-channel WASAPI capture, real-time STT diarization, intent router, and OS-level WDA_EXCLUDEFROMCAPTURE overlay.",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "node src/launcher.js",
+    "dev": "node src/launcher.js",
+    "browser": "node src/server.js",
+    "preview": "node src/server.js",
+    "test": "node test-runner.js",
+    "build": "electron-builder --config electron-builder.json",
+    "dist": "electron-builder --win --x64"
+  },
+  "keywords": [
+    "cluely",
+    "meeting-assistant",
+    "wasapi",
+    "stt",
+    "diarization",
+    "stealth-overlay",
+    "electron"
+  ],
+  "author": "Antigravity Pair Programmer",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "ws": "^8.22.2"
+  }
+}

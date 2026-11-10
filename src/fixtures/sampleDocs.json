@@ -1,0 +1,33 @@
+[
+  {
+    "id": "arch-doc-1",
+    "title": "Dual-Channel Audio Architecture Specification",
+    "category": "Architecture",
+    "content": "The system utilizes Windows Audio Session API (WASAPI) in loopback mode to tap the default render endpoint without needing virtual audio drivers. Local microphone is isolated on Channel 0 (Input), while remote participant audio is routed to Channel 1 (System Loopback). PCM frames are normalized to 16 kHz 16-bit mono chunks every 100ms. Root Mean Square (RMS) energy gating suppresses laptop speaker bleed with threshold alpha=0.35 and 45ms lookahead buffer."
+  },
+  {
+    "id": "arch-doc-2",
+    "title": "Low-Latency Diarization & STT Engine",
+    "category": "Speech Pipeline",
+    "content": "Dual persistent WebSockets multiplex Channel 0 and Channel 1 to the real-time STT engine. Channel 1 executes vocal embedding clustering to isolate Speaker 1 and Speaker 2. Interim tokens are assembled into finalized turns using a 400ms VAD silence threshold. The transcript ring buffer retains 5 minutes of timestamped utterances with speaker IDs and confidence scores (target median latency < 350ms)."
+  },
+  {
+    "id": "arch-doc-3",
+    "title": "Sliding-Window Intent Classifier & LLM Router",
+    "category": "Intelligence",
+    "content": "The intent classifier monitors a 60-second rolling window on Channel 1 (remote audio only), filtering out Channel 0 (user mic) to avoid responding to user's own speech. Interrogatives, technical objections, and imperative prompts trigger multimodal context fusion. Prompt assembly merges the rolling transcript, isolated query, active monitor OCR context, and top-k RAG snippets, streaming back answers via SSE."
+  },
+  {
+    "id": "arch-doc-4",
+    "title": "Stealth Overlay & OS Window Affinity",
+    "category": "Security & UI",
+    "content": "The desktop overlay runs frameless and translucent. It invokes win.setContentProtection(true), setting SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE = 0x00000011) on Windows and NSWindowSharingNone on macOS, preventing Zoom, Teams, Google Meet, and OBS from capturing the window. Click-through routing uses win.setIgnoreMouseEvents(true, { forward: true }), toggling interactivity on card hover."
+  },
+  {
+    "id": "arch-doc-5",
+    "title": "Production Deployment & Latency SLAs",
+    "category": "Operations",
+    "content": "End-to-end latency budget: Audio capture + PCM normalization: 100ms. WebSocket transport + STT first token: 150ms. Turn finalization VAD: 400ms. Intent classification: 45ms. LLM first-token generation: 220ms. Total turnaround from speaker question completion to overlay answer appearance is under 800ms."
+  }
+]
+

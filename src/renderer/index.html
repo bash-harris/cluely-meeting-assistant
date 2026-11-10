@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cluely — Real-Time Meeting Co-Pilot</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="app-root" class="app-container">
+
+    <!-- Top Navigation Bar -->
+    <header class="hud-header interactive-region" id="hud-header">
+      <div class="hud-left">
+        <div class="brand-pill">
+          <span class="live-dot"></span>
+          <span class="brand-name">Cluely</span>
+          <span class="version-tag">WASAPI Active</span>
+        </div>
+
+        <div class="protection-badge" id="protection-badge" title="Click to toggle OS Screen-Share Invisibility (WDA_EXCLUDEFROMCAPTURE)">
+          <span class="shield-icon">🛡️</span>
+          <span class="badge-text">Stealth: Visible</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Audio Meters (Channel 0: Mic, Channel 1: Windows System Loopback) -->
+      <div class="hud-audio-meters">
+        <div class="meter-group" title="Channel 0: Your Microphone">
+          <span class="meter-label">MIC</span>
+          <div class="vu-meter-bar">
+            <div class="vu-meter-fill ch0-fill" id="meter-ch0"></div>
+          </div>
+        </div>
+
+        <div class="meter-group" title="Channel 1: Windows System Audio (YouTube, Zoom, Teams, etc.)">
+          <span class="meter-label">SYS</span>
+          <div class="vu-meter-bar">
+            <div class="vu-meter-fill ch1-fill" id="meter-ch1"></div>
+          </div>
+        </div>
+
+        <div class="bleed-pill" id="bleed-gate-indicator" title="Acoustic Echo Cancellation Gate">
+          <span class="bleed-dot"></span>
+          <span>AEC</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="hud-actions">
+        <button class="btn btn-secondary" id="btn-toggle-matrix" title="Open Pre-Compilation Test Matrix (Ctrl+Shift+T)">
+          <span class="btn-icon">🧪</span> Tests
+        </button>
+
+        <button class="btn btn-icon-only" id="btn-docs" title="Local Knowledge Base">
+          📚
+        </button>
+
+        <button class="btn btn-icon-only" id="btn-settings" title="AI Model & OpenRouter Settings">
+          ⚙️
+        </button>
+
+        <button class="btn btn-icon-only" id="btn-clear-transcript" title="Clear Transcript">
+          🗑️
+        </button>
+      </div>
+    </header>
+
+    <!-- Dedicated AI Co-Pilot Action & Prompt Bar -->
+    <div class="copilot-action-bar interactive-region">
+      <div class="copilot-input-container">
+        <span class="copilot-prompt-icon">✨</span>
+        <input 
+          type="text" 
+          id="copilot-custom-prompt" 
+          placeholder="Ask AI Co-Pilot about the conversation (or leave blank to analyze latest context)..." 
+          class="copilot-prompt-input"
+          autocomplete="off"
+        />
+      </div>
+      <button class="btn btn-primary btn-copilot-trigger" id="btn-trigger-ai" title="Send full transcript & prompt to AI API (Ctrl+Enter)">
+        <span class="btn-icon">⚡</span> AI Co-Pilot
+      </button>
+    </div>
+
+    <!-- AI Co-Pilot Suggestion Card (Floating) -->
+    <section class="ai-suggestion-container interactive-region" id="ai-suggestion-card" style="display: none;">
+      <div class="ai-card-header">
+        <div class="ai-card-title">
+          <span>✨ Co-Pilot Recommendation</span>
+        </div>
+        <div class="ai-card-meta">
+          <span class="latency-badge" id="ai-latency-badge">⚡ Live</span>
+          <button class="btn-xs btn-ghost" id="btn-copy-answer">Copy</button>
+          <button class="btn-xs btn-ghost" id="btn-dismiss-answer">Dismiss</button>
+        </div>
+      </div>
+
+      <div class="detected-query-box" id="detected-query-display">
+        <span class="query-speaker-tag">[Topic]</span>
+        <span id="detected-query-text">Analyzing live conversation...</span>
+      </div>
+
+      <div class="ai-card-body" id="ai-answer-content">
+        <!-- Live streamed tokens inject here -->
+      </div>
+
+      <!-- RAG Sources -->
+      <div class="rag-sources" id="rag-sources-preview" style="display: none;">
+        <!-- Retrieved local docs appear here -->
+      </div>
+    </section>
+
+    <!-- Live Diarized Transcription Feed -->
+    <main class="transcript-feed-container interactive-region" id="transcript-feed">
+      <div class="feed-header">
+        <span class="feed-title">Real-Time Transcription Feed</span>
+        <div class="feed-actions">
+          <span class="vad-indicator" id="vad-indicator">
+            <span class="live-dot" style="width: 6px; height: 6px;"></span>
+            WASAPI Engine Active
+          </span>
+        </div>
+      </div>
+
+      <div class="turns-scroll-area" id="turns-list">
+        <!-- Empty State by default -->
+        <div class="feed-empty-state" id="feed-empty-state">
+          <span class="empty-icon">🎙️</span>
+          <div class="empty-title">Listening to System & Microphone Audio</div>
+          <div class="empty-sub">Whatever plays through your computer (YouTube, meetings, calls) will appear as <b>Speaker</b>. When you speak, it appears as <b>You (Mic)</b>.</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="hud-footer interactive-region">
+      <div class="hotkey-pill"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> <span>AI Co-Pilot</span></div>
+      <div class="hotkey-pill"><kbd>Ctrl</kbd>+<kbd>\</kbd> <span>Stealth Panic Hide</span></div>
+      <div class="hotkey-pill"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> <span>Test Suite</span></div>
+      <div class="status-summary" id="status-bar-text">WASAPI Loopback Active • Hardware Microphone Active • 0 turns</div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL: Pre-Compilation Test Matrix & Verification Studio -->
+  <div class="modal-backdrop interactive-region" id="test-matrix-modal" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>🧪 Pre-Compilation Test Matrix & Verification Studio</h2>
+          <p class="modal-subtitle">Validate dual-channel isolation, echo suppression, diarization latency, and capture exclusion.</p>
+        </div>
+        <button class="btn btn-icon-only" id="btn-close-matrix">✕</button>
+      </div>
+
+      <div class="modal-toolbar">
+        <button class="btn btn-primary" id="btn-run-all-tests">
+          ▶ Run All Benchmarks
+        </button>
+        <button class="btn btn-secondary" id="btn-inspect-prompt">
+          🔍 Dry-Run Prompt Inspector
+        </button>
+        <button class="btn btn-secondary" id="btn-test-screenshare">
+          🖥️ Screen-Share Invisibility Test
+        </button>
+        <div class="overall-badge" id="matrix-overall-badge">STATUS: PENDING</div>
+      </div>
+
+      <!-- Test Matrix Table -->
+      <div class="table-container">
+        <table class="test-table">
+          <thead>
+            <tr>
+              <th>Subsystem</th>
+              <th>Test Target</th>
+              <th>Input</th>
+              <th>Pass Threshold</th>
+              <th>Actual Result</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="test-matrix-body">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Dry-Run Payload Inspector Drawer -->
+      <div class="dry-run-drawer" id="dry-run-drawer" style="display: none;">
+        <div class="drawer-header">
+          <h3>📋 Dry-Run LLM Prompt Inspector & Context Dump</h3>
+          <button class="btn-xs btn-ghost" id="btn-close-drawer">Close Drawer</button>
+        </div>
+        <div class="drawer-body">
+          <pre><code id="dry-run-json-display">Click 'Dry-Run Prompt Inspector' to inspect payload...</code></pre>
+        </div>
+      </div>
+
+      <!-- Screen-Share Invisibility Live Verification Viewport -->
+      <div class="screenshare-verifier" id="screenshare-verifier" style="display: none;">
+        <div class="drawer-header">
+          <h3>🖥️ Screen-Share Framebuffer Invisibility Test</h3>
+          <button class="btn-xs btn-ghost" id="btn-close-verifier">Close</button>
+        </div>
+        <div class="verifier-content">
+          <p class="verifier-explainer">
+            This live WebRTC video capture requests screen frames directly from the OS DWM Compositor.
+            When <b>Stealth: Excluded</b> is active, the overlay is stripped from the video stream while remaining readable on your screen.
+          </p>
+          <div class="video-preview-wrapper">
+            <video id="screenshare-video-preview" autoplay playsinline muted></video>
+            <div class="video-overlay-banner">
+              OS SCREEN CAPTURE BUFFER (WDA_EXCLUDEFROMCAPTURE ACTIVE: OVERLAY ZERO PIXELS)
+            </div>
+          </div>
+          <div class="verifier-controls" style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="btn btn-primary btn-sm" id="btn-start-screen-test">Tap Screen Buffer Now</button>
+            <button class="btn btn-secondary btn-sm" id="btn-toggle-protection-test">Toggle Protection Flag</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Local RAG Knowledge Base & Docs -->
+  <div class="modal-backdrop interactive-region" id="rag-modal" style="display: none;">
+    <div class="modal-window modal-compact">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📚 Local Knowledge Base (RAG Context)</h2>
+          <p class="modal-subtitle">Pre-loaded meeting notes and architectural specifications for real-time retrieval.</p>
+        </div>
+        <button class="btn btn-icon-only" id="btn-close-rag">✕</button>
+      </div>
+      <div class="rag-docs-list" id="rag-docs-list">
+        <!-- Rendered doc cards -->
+      </div>
+      <div class="add-doc-section">
+        <h3 style="font-size: 13px; font-weight: 600;">Add Meeting Document / Cheat Sheet</h3>
+        <input type="text" id="new-doc-title" placeholder="Document Title (e.g. System Design FAQ)" class="text-input" />
+        <textarea id="new-doc-content" placeholder="Paste architectural specifications, meeting notes, or answers here..." class="text-area"></textarea>
+        <button class="btn btn-primary btn-sm" id="btn-add-doc">Index Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AI Co-Pilot Settings (OpenRouter, Gemini, DeepSeek) -->
+  <div class="modal-backdrop interactive-region" id="settings-modal" style="display: none;">
+    <div class="modal-window modal-compact" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>⚙️ AI Co-Pilot Intelligence Settings</h2>
+          <p class="modal-subtitle">Connect OpenRouter Free Tier, Google Gemini, or DeepSeek for real-time answer streaming.</p>
+        </div>
+        <button class="btn btn-icon-only" id="btn-close-settings">✕</button>
+      </div>
+      <div class="settings-content" style="padding: 16px 0;">
+
+        <!-- Provider Selector -->
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">ACTIVE AI PROVIDER</label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-sm btn-provider active" data-provider="openrouter" id="tab-openrouter">OpenRouter (Free)</button>
+            <button type="button" class="btn btn-sm btn-provider" data-provider="gemini" id="tab-gemini">Google Gemini</button>
+            <button type="button" class="btn btn-sm btn-provider" data-provider="deepseek" id="tab-deepseek">DeepSeek Direct</button>
+          </div>
+        </div>
+
+        <!-- OpenRouter Panel -->
+        <div id="panel-openrouter" class="provider-panel">
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">OPENROUTER API KEY</label>
+            <input type="password" id="openrouter-api-key" placeholder="sk-or-v1-..." class="text-input" style="width: 100%; box-sizing: border-box;" />
+            <span style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; display: block;">Get your free key at <a href="https://openrouter.ai/keys" target="_blank" style="color: var(--accent-primary);">openrouter.ai/keys</a> (No credit card required).</span>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">OPENROUTER MODEL</label>
+            <select id="openrouter-model-select" class="text-input" style="width: 100%; box-sizing: border-box; height: 38px;">
+              <option value="meta-llama/llama-3.2-3b-instruct:free">Meta Llama 3.2 3B Instruct (Free · Fast)</option>
+              <option value="google/gemini-2.0-flash-exp:free">Google Gemini 2.0 Flash Exp (Free · Smart)</option>
+              <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free · Reasoning)</option>
+              <option value="mistralai/mistral-7b-instruct:free">Mistral 7B Instruct (Free)</option>
+              <option value="qwen/qwen-2.5-72b-instruct:free">Qwen 2.5 72B Instruct (Free)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Google Gemini Panel -->
+        <div id="panel-gemini" class="provider-panel" style="display: none;">
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">GEMINI API KEY</label>
+            <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="text-input" style="width: 100%; box-sizing: border-box;" />
+            <span style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; display: block;">Get a free API key at <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--accent-primary);">aistudio.google.com/apikey</a></span>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">GEMINI MODEL (LATEST GENERATION WITH HIGHEST FREE LIMITS)</label>
+            <select id="gemini-model-select" class="text-input" style="width: 100%; box-sizing: border-box; height: 38px;">
+              <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (Highest Free Limits · 30 RPM / 1500 RPD · Fastest)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Next-Gen Multimodal · Fast)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Frontier Deep Reasoning & Code)</option>
+              <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Next-Gen Preview)</option>
+              <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking (Chain-of-Thought Reasoning)</option>
+              <option value="gemini-2.0-pro-exp-02-05">Gemini 2.0 Pro Experimental</option>
+              <option value="custom">Custom Model Name...</option>
+            </select>
+            <input type="text" id="gemini-custom-model" placeholder="Enter custom model ID (e.g. gemini-3.1-flash-lite)" class="text-input" style="width: 100%; box-sizing: border-box; margin-top: 6px; display: none;" />
+          </div>
+        </div>
+
+        <!-- DeepSeek Panel -->
+        <div id="panel-deepseek" class="provider-panel" style="display: none;">
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">DEEPSEEK API KEY</label>
+            <input type="password" id="deepseek-api-key" placeholder="sk-..." class="text-input" style="width: 100%; box-sizing: border-box;" />
+            <span style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; display: block;">Get your key from <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color: var(--accent-primary);">platform.deepseek.com</a></span>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">DEEPSEEK MODEL</label>
+            <select id="deepseek-model-select" class="text-input" style="width: 100%; box-sizing: border-box; height: 38px;">
+              <option value="deepseek-chat">DeepSeek-V3 (deepseek-chat · Ultra-fast)</option>
+              <option value="deepseek-reasoner">DeepSeek-R1 (deepseek-reasoner · Chain-of-thought)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;">
+          <button class="btn btn-primary btn-sm" id="btn-save-settings">Save & Apply Provider</button>
+        </div>
+        <div id="settings-status" style="margin-top: 10px; font-size: 12px; font-weight: 500; display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="browserAdapter.js"></script>
+  <script src="app.js"></script>
+  <script src="testMatrixUI.js"></script>
+</body>
+</html>

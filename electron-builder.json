@@ -1,0 +1,27 @@
+{
+  "appId": "com.cluely.meetingassistant",
+  "productName": "Cluely",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "src/**/*",
+    "native/**/*",
+    "fixtures/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "dir",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "requestedExecutionLevel": "asInvoker"
+  }
+}
+
